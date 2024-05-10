@@ -7,7 +7,7 @@ async function getLibroMongo(filtros) {
     
     return {
         resultados: librosFiltrados,
-        cantidadLibros: cantidadLibros
+        "Cantidad de Libros": cantidadLibros
     };
 }
 

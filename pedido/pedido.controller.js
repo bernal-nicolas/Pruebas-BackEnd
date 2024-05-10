@@ -1,6 +1,5 @@
 const { throwCustomError } = require("../utils/functions");
 const { createPedidoMongo, getPedidoMongo, updatePedidoMongo, deletePedidoMongo } = require("./pedido.actions");
-const { deleteLibroMongo } = require("../libro/libro.actions");
 
 function validarEstado(estado) {
     const estadosValidos = ["En progreso", "Completado", "Cancelado"];

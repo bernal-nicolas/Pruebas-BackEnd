@@ -7,7 +7,7 @@ async function getPedidoMongo(filtros) {
 
     return {
         resultados: pedidosFiltrados,
-        cantidadProductos: cantidadPedidos
+        "Cantidad de pedidos": cantidadPedidos
     };
 }
 
