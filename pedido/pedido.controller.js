@@ -1,5 +1,13 @@
 const { throwCustomError } = require("../utils/functions");
 const { createPedidoMongo, getPedidoMongo, updatePedidoMongo, deletePedidoMongo } = require("./pedido.actions");
+const { deleteLibroMongo } = require("../libro/libro.actions");
+
+function validarEstado(estado) {
+    const estadosValidos = ["En progreso", "Completado", "Cancelado"];
+    if (!estadosValidos.includes(estado)) {
+        throwCustomError(400, "Estado inválido o no colocaste ningun estado. Los estados permitidos son: 'En progreso', 'Completado', 'Cancelado'.");
+    }
+}
 
 async function readPedidoConFiltros(query) {
     const { fecha_inicial, fecha_final } = query;
@@ -23,22 +31,17 @@ async function readPedidoConFiltros(query) {
 }
 
 async function createPedido(datos) {
-    const { fecha, estado } = datos;
-
-    if (estado !== "En progreso" && estado !== "Completado" && estado !== "Cancelado") {
-        throwCustomError(501, "Estado invalido.");
-    }
-
+    validarEstado(datos.estado);
     const pedidoCreado = await createPedidoMongo(datos);
-
     return pedidoCreado;
 }
 
-function updatePedido(datos) {
-    const { _id, ...cambios } = datos;
-
-    const pedidoActualizado = updatePedidoMongo(_id, cambios);
-
+async function updatePedido(datos) {
+    const { _id, estado } = datos;
+    validarEstado(estado);
+    
+    const cambios = { estado };
+    const pedidoActualizado = await updatePedidoMongo(_id, cambios);
     return pedidoActualizado;
 }
 
