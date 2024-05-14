@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router();
 const { readLibroConFiltros, createLibro, updateLibro, deleteLibro } = require("./libro.controller");
 const { respondWithError } = require('../utils/functions');
+const authenticateToken = require('../middlewares/authMiddleware');
 
 async function GetLibros(req, res) {
     try {
@@ -56,10 +57,10 @@ async function DeleteLibros(req, res) {
     }
 }
 
-router.get("/", GetLibros);
+router.get("/", authenticateToken, GetLibros);
 router.post("/", PostLibro);
-router.patch("/", PatchLibros);
-router.delete("/:id", DeleteLibros);
+router.patch("/",  authenticateToken, PatchLibros);
+router.delete("/:id",  authenticateToken, DeleteLibros);
 
 
 module.exports = router;

@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router();
 const { readPedidoConFiltros, createPedido, updatePedido, deletePedido } = require("./pedido.controller");
 const { respondWithError } = require('../utils/functions');
+const authenticateToken = require('../middlewares/authMiddleware');
 
 async function GetPedidos(req, res) {
     try {
@@ -56,10 +57,10 @@ async function DeletePedidos(req, res) {
     }
 }
 
-router.get("/", GetPedidos);
-router.post("/", PostPedido);
-router.patch("/", PatchPedidos);
-router.delete("/:id", DeletePedidos);
+router.get("/", authenticateToken, GetPedidos);
+router.post("/", authenticateToken, PostPedido);
+router.patch("/", authenticateToken, PatchPedidos);
+router.delete("/:id", authenticateToken, DeletePedidos);
 
 
 module.exports = router;
