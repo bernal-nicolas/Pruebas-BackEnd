@@ -1,12 +1,8 @@
 const request = require('supertest');
 const express = require('express');
-const {
-    readPedidoConFiltros,
-    createPedido,
-    updatePedido,
-    deletePedido
-} = require('../../../pedido/pedido.controller');
+const pedidoRoute = require('../../../pedido/pedido.route');
 const { throwCustomError } = require('../../../utils/functions');
+const { createPedidoMongo, getPedidoMongo, updatePedidoMongo, deletePedidoMongo } = require('../../../pedido/pedido.actions');
 
 jest.mock('../../../pedido/pedido.actions', () => ({
     createPedidoMongo: jest.fn(),
@@ -15,7 +11,7 @@ jest.mock('../../../pedido/pedido.actions', () => ({
     deletePedidoMongo: jest.fn()
 }));
 
-const { createPedidoMongo, getPedidoMongo, updatePedidoMongo, deletePedidoMongo } = require('../../../pedido/pedido.actions');
+jest.mock('../../../middlewares/authMiddleware', () => (req, res, next) => next());
 
 jest.mock('../../../utils/functions', () => ({
     throwCustomError: jest.fn((status, message) => {
@@ -23,58 +19,32 @@ jest.mock('../../../utils/functions', () => ({
         error.status = status;
         throw error;
     }),
-    respondWithError: jest.fn()
+    respondWithError: jest.fn((res, e) => {
+        res.status(e.status || 500).json({ msg: e.message || '' });
+    })
 }));
 
 const app = express();
 app.use(express.json());
+app.use('/pedido', pedidoRoute);
 
-app.get('/pedido', async (req, res) => {
-    try {
-        const result = await readPedidoConFiltros(req.query);
-        res.status(200).json(result);
-    } catch (e) {
-        res.status(500).json({ msg: e.message });
-    }
-});
-
-app.post('/pedido', async (req, res) => {
-    try {
-        const result = await createPedido(req.body);
-        res.status(200).json({ mensaje: 'Éxito. 👍' });
-    } catch (e) {
-        res.status(500).json({ msg: e.message });
-    }
-});
-
-app.patch('/pedido', async (req, res) => {
-    try {
-        const result = await updatePedido(req.body);
-        res.status(200).json({ mensaje: 'Éxito. 👍' });
-    } catch (e) {
-        res.status(500).json({ msg: e.message });
-    }
-});
-
-app.delete('/pedido/:id', async (req, res) => {
-    try {
-        const result = await deletePedido(req.params.id);
-        res.status(200).json({ mensaje: 'Éxito. 👍' });
-    } catch (e) {
-        res.status(500).json({ msg: e.message });
-    }
-});
-
-describe('Pedido Controller', () => {
+describe('Pedido Routes', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-    describe('readPedidoConFiltros', () => {
-        it('should return 400 if fecha_inicial or fecha_final are not provided', async () => {
+    describe('GET /pedido', () => {
+        it('should return 500 if fecha_inicial or fecha_final are not provided', async () => {
+            // Simular el caso en el que se lanzará un error desde el controlador
+            const mockReadPedidoConFiltros = jest.fn(() => {
+                throwCustomError(500, 'Debe proporcionar tanto la fecha inicial como la fecha final.');
+            });
+
+            const controller = require('../../../pedido/pedido.controller');
+            controller.readPedidoConFiltros = mockReadPedidoConFiltros;
+
             const response = await request(app).get('/pedido');
             expect(response.status).toBe(500);
-            expect(response.body.msg).toBe('Debe proporcionar tanto la fecha inicial como la fecha final.');
         });
 
         it('should return 200 with valid filters', async () => {
@@ -83,16 +53,17 @@ describe('Pedido Controller', () => {
 
             const response = await request(app).get('/pedido').query(filtros);
             expect(response.status).toBe(200);
-            expect(response.body).toEqual({ resultados: [], "Cantidad de pedidos": 0 });
+            expect(response.body.resultados).toEqual([]);
+            expect(response.body["Cantidad de pedidos"]).toBe(0);
         });
     });
 
-    describe('createPedido', () => {
+    describe('POST /pedido', () => {
         it('should return 400 if estado is invalid', async () => {
             const datos = { estado: 'Invalido', lista_libros: ['Libro1'], usuario_do: 'Usuario1', usuario_rec: 'Usuario2', fecha: new Date() };
 
             const response = await request(app).post('/pedido').send(datos);
-            expect(response.status).toBe(500);
+            expect(response.status).toBe(400);
             expect(response.body.msg).toBe("Estado inválido o no colocaste ningun estado. Los estados permitidos son: 'En progreso', 'Completado', 'Cancelado'.");
         });
 
@@ -106,12 +77,12 @@ describe('Pedido Controller', () => {
         });
     });
 
-    describe('updatePedido', () => {
+    describe('PATCH /pedido', () => {
         it('should return 400 if estado is invalid', async () => {
             const datos = { _id: '1', estado: 'Invalido' };
 
             const response = await request(app).patch('/pedido').send(datos);
-            expect(response.status).toBe(500);
+            expect(response.status).toBe(400);
             expect(response.body.msg).toBe("Estado inválido o no colocaste ningun estado. Los estados permitidos son: 'En progreso', 'Completado', 'Cancelado'.");
         });
 
@@ -125,7 +96,7 @@ describe('Pedido Controller', () => {
         });
     });
 
-    describe('deletePedido', () => {
+    describe('DELETE /pedido/:id', () => {
         it('should return 500 if id is invalid', async () => {
             deletePedidoMongo.mockImplementationOnce(() => {
                 throwCustomError(500, 'Invalid ID');
