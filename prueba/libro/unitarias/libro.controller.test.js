@@ -13,14 +13,12 @@ describe('Libro Controller', () => {
             const query = { nombre: 'Libro A' };
             const libros = [{ nombre: 'Libro A', autor: 'Autor A', genero: 'Genero A', fecha: new Date(), editorial: 'Editorial A' }];
             getLibroMongo.mockResolvedValue({
-                resultados: libros,
-                "Cantidad de Libros": 1
+                resultados: libros
             });
 
             const result = await readLibroConFiltros(query);
             expect(result).toEqual({
-                resultados: libros,
-                "Cantidad de Libros": 1
+                resultados: libros
             });
             expect(getLibroMongo).toHaveBeenCalledWith(query);
         });

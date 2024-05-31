@@ -20,7 +20,7 @@ describe('Usuario Actions', () => {
     });
 
     it('should handle invalid data', async () => {
-      const datos = { username: '', password: 'password' };
+      const datos = { password: 'password' };
       Usuario.create.mockRejectedValue(new Error('Invalid data'));
 
       await expect(createUsuarioMongo(datos)).rejects.toThrow('Invalid data');

@@ -28,14 +28,12 @@ describe('Pedido Controller', () => {
                        }
                       ];
       getPedidoMongo.mockResolvedValue({
-        resultados: pedidos,
-        "Cantidad de Pedidos": 2
+        resultados: pedidos
       });
       
       const result = await readPedidoConFiltros(query);
       expect(result).toEqual({
-        resultados: pedidos,
-        "Cantidad de Pedidos": 2
+        resultados: pedidos
       });
     });
   });
