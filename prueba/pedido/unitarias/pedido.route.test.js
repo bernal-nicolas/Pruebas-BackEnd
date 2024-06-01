@@ -107,6 +107,7 @@ describe('Pedido Routes', () => {
             const response = await request(app).patch('/pedido').send(datos);
             expect(response.status).toBe(200);
             expect(response.body.mensaje).toBe('Éxito. 👍');
+            expect(updatePedidoMongo).toHaveBeenCalled(); // END2END
         });
     });
 
@@ -128,6 +129,7 @@ describe('Pedido Routes', () => {
             const response = await request(app).delete(`/pedido/${id}`);
             expect(response.status).toBe(200);
             expect(response.body.mensaje).toBe('Éxito. 👍');
+            expect(deletePedidoMongo).toHaveBeenCalled(); // END2END
         });
     });
 });

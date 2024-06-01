@@ -2,16 +2,8 @@ const request = require('supertest');
 const express = require('express');
 const libroRoutes = require('../../../libro/libro.route');
 const { readLibroConFiltros, createLibro, updateLibro, deleteLibro } = require('../../../libro/libro.controller');
-const { getLibroMongo, createLibroMongo, updateLibroMongo, deleteLibroMongo } = require('../../../libro/libro.actions');
 
 jest.mock('../../../libro/libro.controller');
-jest.mock('../../../libro/libro.actions', () => ({
-  getLibroMongo: jest.fn(),
-  createLibroMongo: jest.fn(),
-  updateLibroMongo: jest.fn(),
-  deleteLibroMongo: jest.fn()
-}));
-
 jest.mock('../../../middlewares/authMiddleware', () => jest.fn((req, res, next) => next()));
 
 const app = express();
@@ -23,43 +15,20 @@ describe('Libro Routes', () => {
         jest.clearAllMocks();
     });
 
-    // need get libro (un)
     describe('GET /libro', () => {
         it('should return libros with status 200', async () => {
-            const query = { autor: 'Autor A' };
-            const libros = [{ nombre: 'Libro A', autor: 'Autor A', genero: 'Genero A', fecha: new Date().toISOString(), editorial: 'Editorial A' },
-                            {  nombre: 'Libro B', autor: 'Autor A', genero: 'Genero B', fecha: new Date().toISOString(), editorial: 'Editorial B' }
-                          ];
+            const query = { nombre: 'Libro A' };
+            const libros = [{ nombre: 'Libro A', autor: 'Autor A', genero: 'Genero A', fecha: new Date().toISOString(), editorial: 'Editorial A' }];
             readLibroConFiltros.mockResolvedValue({
                 resultados: libros,
-                "Cantidad de Libros": 2
+                "Cantidad de Libros": 1
             });
 
             const res = await request(app).get('/libro').query(query);
             expect(res.status).toBe(200);
             expect(res.body.resultados).toEqual(libros);
-            expect(res.body["Cantidad de Libros"]).toBe(2);
-            expect(readLibroConFiltros).toHaveBeenCalledWith(query);
-        });
-
-        // retorna un solo libro
-        it('should return one libro with status 200', async () => {
-          const query = { autor: 'A', 'Genero A' };
-          const libro = [{ nombre: 'Libro A', autor: 'Autor A', genero: 'Genero A', fecha: new Date().toISOString(), editorial: 'Editorial A' },
-                            {  nombre: 'Libro B', autor: 'Autor A', genero: 'Genero B', fecha: new Date().toISOString(), editorial: 'Editorial B' }
-                          ];
-
-          readLibroConFiltros.mockResolvedValue({
-            resultados: libro,
-            "Cantidad de Libros": 1
-          });
-
-          const res = await request(app).get('/libro').query(query);
-          expect(res.status).toBe(200);
-          expect(res.body.resultados).toEqual(libro);
-          expect(res.body["Cantidad de Libros"]).toBe(1);
-          expect(readLibroConFiltros).toHaveBeenCalledWith(query);
-
+            expect(res.body["Cantidad de Libros"]).toBe(1);
+            expect(readLibroConFiltros).toHaveBeenCalledWith(query); //Integracion
         });
 
         it('should handle errors correctly', async () => {
@@ -79,7 +48,7 @@ describe('Libro Routes', () => {
             const res = await request(app).post('/libro').send(datos);
             expect(res.status).toBe(200);
             expect(res.body.mensaje).toBe("Éxito. 👍");
-            expect(createLibro).toHaveBeenCalledWith(datos);
+            expect(createLibro).toHaveBeenCalledWith(datos); //Integracion
         });
 
         it('should handle invalid data', async () => {
