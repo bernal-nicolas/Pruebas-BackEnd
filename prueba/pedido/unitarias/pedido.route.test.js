@@ -2,7 +2,10 @@ const request = require('supertest');
 const express = require('express');
 const pedidoRoute = require('../../../pedido/pedido.route');
 const { throwCustomError } = require('../../../utils/functions');
-const { createPedidoMongo, getPedidoMongo, updatePedidoMongo, deletePedidoMongo } = require('../../../pedido/pedido.actions');
+const { createPedidoMongo, getPedidoMongo, updatePedidoMongo,
+        deletePedidoMongo 
+      } = require('../../../pedido/pedido.actions');
+
 
 jest.mock('../../../pedido/pedido.actions', () => ({
     createPedidoMongo: jest.fn(),
@@ -20,7 +23,7 @@ jest.mock('../../../utils/functions', () => ({
         throw error;
     }),
     respondWithError: jest.fn((res, e) => {
-        res.status(e.status || 500).json({ msg: e.message || '' });
+        res.status(e.status || 400).json({ msg: e.message || '' });
     })
 }));
 
@@ -34,14 +37,24 @@ describe('Pedido Routes', () => {
     });
 
     describe('GET /pedido', () => {
+        it('should call getPedidoMongo method in actions End2End', async () => {
+          const pedidos = { estado: 'Completado', lista_libros: ['Libro1'], usuario_do: 'Usuario1', usuario_rec: 'Usuario2', fecha: "2025-20-2" };
+          const query = { estado: 'Completado', fecha_final: "2-10-2022", fecha_inicial: "4-20-2023" };
+        
+
+          const res = await request(app).get('/pedido').query(query);
+          expect(res.status).toBe(200);
+          expect(getPedidoMongo).toHaveBeenCalled();
+        })
+
         it('should return 500 if fecha_inicial or fecha_final are not provided', async () => {
             // Simular el caso en el que se lanzará un error desde el controlador
             const mockReadPedidoConFiltros = jest.fn(() => {
-                throwCustomError(500, 'Debe proporcionar tanto la fecha inicial como la fecha final.');
+                throwCustomError(400, 'Debe proporcionar tanto la fecha inicial como la fecha final.');
             });
-
             const controller = require('../../../pedido/pedido.controller');
             controller.readPedidoConFiltros = mockReadPedidoConFiltros;
+            readPedidoConFiltros = mockReadPedidoConFiltros;
 
             const response = await request(app).get('/pedido');
             expect(response.status).toBe(500);
@@ -49,12 +62,12 @@ describe('Pedido Routes', () => {
 
         it('should return 200 with valid filters', async () => {
             const filtros = { fecha_inicial: '2023-01-01', fecha_final: '2023-12-31' };
-            getPedidoMongo.mockResolvedValue({ resultados: [], "Cantidad de pedidos": 0 });
+            getPedidoMongo.mockResolvedValue({ resultados: [filtros], "Cantidad de pedidos": 1 });
 
             const response = await request(app).get('/pedido').query(filtros);
             expect(response.status).toBe(200);
-            expect(response.body.resultados).toEqual([]);
-            expect(response.body["Cantidad de pedidos"]).toBe(0);
+            expect(response.body.resultados).toEqual([filtros]);
+            expect(response.body["Cantidad de pedidos"]).toBe(1);
         });
     });
 
@@ -67,13 +80,14 @@ describe('Pedido Routes', () => {
             expect(response.body.msg).toBe("Estado inválido o no colocaste ningun estado. Los estados permitidos son: 'En progreso', 'Completado', 'Cancelado'.");
         });
 
-        it('should create a pedido with valid data', async () => {
+        it('should create a pedido with valid data END2END', async () => {
             const datos = { estado: 'En progreso', lista_libros: ['Libro1'], usuario_do: 'Usuario1', usuario_rec: 'Usuario2', fecha: new Date() };
             createPedidoMongo.mockResolvedValue(datos);
 
             const response = await request(app).post('/pedido').send(datos);
             expect(response.status).toBe(200);
             expect(response.body.mensaje).toBe('Éxito. 👍');
+            expect(createPedidoMongo).toHaveBeenCalled(); // END2END
         });
     });
 
